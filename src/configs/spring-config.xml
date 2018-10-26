@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+    <context:component-scan base-package="ssh.ft"></context:component-scan>
+    <!--加载资源对象 -->
+    <context:property-placeholder location="classpath:configs/db.properties"/>
+    <!--datasource-->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+    <!--sessionFactory 因为有spring 所以交给spring-->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <!--通过配置文件的方式获取数据源 出现异常 未解决-->
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.show_sql">true</prop>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQL5InnoDBDialect</prop>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.format_sql">true</prop>
+            </props>
+        </property>
+        <property name="dataSource" ref="dataSource"/>
+        <property name="mappingResources">
+            <list>
+                <!--以下用来列出所有的PO映射文件-->
+                <value>ssh/ft/entity/Account.hbm.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <!--注入Dao-->
+    <bean class="ssh.ft.dao.impl.AccountDaoImpl" id="accountDao">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <!--注入service-->
+    <bean class="ssh.ft.service.impl.AccountManagerImpl" id="accountManager">
+        <property name="dao" ref="accountDao"/>
+    </bean>
+
+    <!--写action和业务逻辑层依赖注入-->
+    <bean class="ssh.ft.action.LoginAction" id="loginAction" scope="prototype">
+        <property name="accountManager" ref="accountManager"/>
+    </bean>
+</beans>
+
+
+
